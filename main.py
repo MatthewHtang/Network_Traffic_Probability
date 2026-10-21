@@ -73,14 +73,47 @@ df["A_label"] = df["Avg"].apply(label_A)
 #Create a table
 table = pd.crosstab(df["F_label"], df["A_label"], margins=True, margins_name="Total")
 
-print("\n---------- 3 × 3 Frequency Table of F versus A ----------\n\n",table)
+print("\n---------- 3 × 3 Frequency Table of F versus A ----------\n",table)
 
 # Convert it to a joint probability table by dividing each interior count by M
 # Get the conor value
 m = table.loc["Total", "Total"]
 joint_prob_table = table / m
 
-print("\n\n---------- Joint Probability Table ----------\n\n", joint_prob_table)
+print("\n\n---------- Joint Probability Table ----------\n", joint_prob_table)
+print("\nThe sum of the nine joint probabilities: ", joint_prob_table.loc["Total", "Total"])
 
 
+"""
+2. Calculate both marginal distributions. Report the probabilities of a Large flow and a Large average bytes per
+packet. Interpret each result.
+"""
+# Calculate marginal distribution for F
+p_f_small = round(joint_prob_table.loc["F: Small", "Total"], 6)
+p_f_medium = round(joint_prob_table.loc["F: Medium", "Total"], 6)
+p_f_large = round(joint_prob_table.loc["F: Large", "Total"], 6)
 
+# Calculate marginal distribution for A
+p_a_small = round(joint_prob_table.loc["Total", "A: Small"], 6)
+p_a_medium = round(joint_prob_table.loc["Total", "A: Medium"], 6)
+p_a_large = round(joint_prob_table.loc["Total", "A: Large"], 6)
+
+print(f"\n\n---------- Marginal Distribution for F ----------\n"
+      f"P(F:Small) = {p_f_small}\n"
+      f"P(F: Medium) = {p_f_medium}\n"
+      f"P(F: Large) = {p_f_large}")
+
+print(f"\n\n---------- Marginal Distribution for A ----------\n"
+      f"P(A:Small) = {p_a_small}\n"
+      f"P(A: Medium) = {p_a_medium}\n"
+      f"P(A: Large) = {p_a_large}")
+
+print("\nProbability of a Large Flow: ", round(table.loc["F: Large", "Total"]/m, 6))
+print("Probability of a Large Average Bytes per packet: ", round(table.loc["Total", "A: Large"]/m, 6))
+
+"""
+3. Calculate P(F = Large, A = Small), P(A = Large | F = Large), and P(F = Large | A = Large). Show the counts and
+denominator for each. If a conditioning category is empty, report the conditional probability as undefined. (6
+points)
+
+"""
