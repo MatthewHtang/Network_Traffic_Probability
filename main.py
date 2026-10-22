@@ -9,6 +9,88 @@ df = pd.read_csv("data/log2.csv")
 Edgar
 """
 
+#Question 1. Report the original number of records and list the distinct Action values.
+
+#Prints the number of records of network traffic according to dataset
+print(len(df))
+
+#Prints a list of unique "Action values" by first selecting the column "Action" the dataset
+print(df["Action"].unique())
+
+
+
+# Question 2. Check the two required columns for missing or invalid values. Exclude affected records and report how many
+# were excluded.
+
+#Prints the number of actions that are missing within the dataset
+print(df["Action"].isna().sum())
+
+#Prints the number of destination ports that are missing within the dataset
+print(df["Destination Port"].isna().sum())
+
+#Checks and prints the dataset Destination Port values to 
+#gauge possible invalid values (anything outside of network port range 0-65535)
+print(df["Destination Port"].min())
+print(df["Destination Port"].max())
+
+#Prints number of values that are invalid/outside our range, all based from values in Destination Port column
+print((~df["Destination Port"].between(0,65535)).sum())
+
+#Prints the number of values that are not whole numbers, meaning they're invalid values 
+print((df["Destination Port"] % 1 !=0).sum())
+
+
+#Prints the number of values in the Action column that are not the 4 acceptable action values
+print((~df["Action"].isin(["allow", "drop", "deny", "reset-both"])).sum())
+
+#Transfers the cleaned/checked dataset to a copy that group members will use
+df_cleaned = df.copy()
+
+
+#No records excluded after checking, so excluded is simply 0
+excluded_records = 0
+print("Number of excluded records is: ", excluded_records)
+
+#Prints the final number of usable records, N, which is confirmed to be all original records
+N = len(df_cleaned)
+print("Final number of usable records, N, is: ", N)
+
+#Defining and implementing "Destination port" and "Firewall outcome" as two categories in dataset
+def categorize_port(port):
+    if port == 53:
+        return "Port 53"
+    elif port == 80:
+        return "Port 80"
+    elif port == 443:
+        return "Port 443"
+    else:
+        return "Other"    
+
+
+#Creates a new column in dataset and prints the number of each category of Destination Port
+df_cleaned["X"] = df_cleaned["Destination Port"].apply(categorize_port)
+print(df_cleaned["X"].value_counts())
+
+
+#
+def categorize_action(action):
+    if action == "allow":
+        return "Allowed"
+    else:
+        return "Not Allowed"  
+
+
+#
+#Creates a new column in dataset and prints the number of each category of Action
+df_cleaned["Y"] = df_cleaned["Action"].apply(categorize_action)
+print(df_cleaned["Y"].value_counts())
+
+
+
+print("END OF PART 1/n")
+
+
+
 # Part 2 Joint distribution
 """
 Edgar
