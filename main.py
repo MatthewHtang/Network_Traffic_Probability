@@ -186,13 +186,16 @@ for port, outcome in cells_to_test:
 
 print(
     "\nWritten Interpretation for Question 1:\n"
-    "We tested independence by comparing joint probabilities "
-    "with the products of the corresponding marginal "
-    "probabilities for two cells. If the values differ, the "
-    "independence equation does not hold exactly for that cell. "
-    "However, testing only two cells is not enough to determine "
-    "whether destination port category and firewall action are "
-    "fully independent."
+    "For Port 443 and Allowed, the joint probability is "
+    "0.178188, while the product of the marginal probabilities "
+    "is 0.102408. For Port 53 and Not Allowed, the joint "
+    "probability is 0.000443, while the product of the marginal "
+    "probabilities is 0.100112. Since these values are different, "
+    "the independence equation does not hold for these selected "
+    "cells. This suggests that destination port category and "
+    "firewall action are associated in this dataset. However, "
+    "checking two cells alone is not a complete test of "
+    "independence for the entire table."
 )
 
 """
