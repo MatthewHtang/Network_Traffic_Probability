@@ -250,15 +250,18 @@ print(allowance_table.to_string(
 
 print(
     "\nWritten Interpretation for Question 2:\n"
-    f"The overall allowance probability is {overall_allowed:.6f}. "
-    "The conditional allowance probabilities show the "
-    "proportion of connections allowed within each destination "
-    "port category. Comparing these values with the overall "
-    "probability helps determine whether firewall actions vary "
-    "across port categories. Noticeable differences suggest an "
-    "association, while similar probabilities suggest a weaker "
-    "association. These calculations describe association and "
-    "do not prove causation."
+    f"The overall allowance probability is {overall_allowed:.6f} "
+    f"({overall_allowed * 100:.2f}%). "
+    "The conditional allowance probabilities are approximately "
+    "99.81% for Port 53, 99.83% for Port 80, "
+    "99.94% for Port 443, and 19.04% for Other. "
+    "This shows that almost all traffic in the three specified "
+    "port categories was allowed, while only about 19.04% of "
+    "traffic in the Other category was allowed. These differences "
+    "suggest an association between destination port category "
+    "and firewall action in this dataset. However, association "
+    "does not prove causation, and traffic in the Other category "
+    "is not necessarily malicious."
 )
 
 """
