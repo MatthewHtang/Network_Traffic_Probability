@@ -107,9 +107,222 @@ Om
 """
 
 # Part 5 Interpretation and independence
+
+# X = Destination Port Category
+# Y = Firewall Action (Allowed / Not Allowed)
+
+port_order = ["Port 53", "Port 80", "Port 443", "Other"]
+outcome_order = ["Allowed", "Not Allowed"]
+
+# Create the frequency table
+counts = pd.crosstab(df_cleaned["X"], df_cleaned["Y"])
+
+# Ensure all categories appear in the correct order
+counts = counts.reindex(
+    index=port_order,
+    columns=outcome_order,
+    fill_value=0
+)
+
+# Calculate total records
+N = len(df_cleaned)
+
+# Calculate joint probabilities
+joint_prob = counts / N
+
+# Calculate marginal probabilities
+p_port = counts.sum(axis=1) / N
+p_outcome = counts.sum(axis=0) / N
+
 """
-Akshay
+1. If X and Y were independent, they would satisfy the relationship below. Compare the observed joint
+probability with the product of the marginal probabilities for two cells in your table. Show the calculations.
+𝑃(𝑋 = 𝑥, 𝑌 = 𝑦) = 𝑃(𝑋 = 𝑥)𝑃(𝑌 = 𝑦)
+
 """
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 1: TEST OF INDEPENDENCE")
+print("=" * 60)
+
+print("\nJoint Frequency Table:")
+print(counts)
+
+print("\nJoint Probability Table:")
+print(joint_prob.round(6))
+
+cells_to_test = [
+    ("Port 443", "Allowed"),
+    ("Port 53", "Not Allowed")
+]
+
+for port, outcome in cells_to_test:
+
+    observed_probability = joint_prob.loc[port, outcome]
+
+    expected_probability = (
+        p_port.loc[port] * p_outcome.loc[outcome]
+    )
+
+    difference = abs(
+        observed_probability - expected_probability
+    )
+
+    print(f"\nCell: {port} and {outcome}")
+    print(f"P(X={port}, Y={outcome}) = "
+          f"{observed_probability:.6f}")
+
+    print(f"P(X={port}) * P(Y={outcome}) = "
+          f"{expected_probability:.6f}")
+
+    print(f"Absolute Difference = {difference:.6f}")
+
+    if difference < 0.000001:
+        print("Interpretation: These probabilities are "
+              "approximately equal for this cell.")
+    else:
+        print("Interpretation: These probabilities differ "
+              "for this cell, so this cell does not satisfy "
+              "the independence equation exactly.")
+
+print(
+    "\nWritten Interpretation for Question 1:\n"
+    "We tested independence by comparing joint probabilities "
+    "with the products of the corresponding marginal "
+    "probabilities for two cells. If the values differ, the "
+    "independence equation does not hold exactly for that cell. "
+    "However, testing only two cells is not enough to determine "
+    "whether destination port category and firewall action are "
+    "fully independent."
+)
+
+"""
+
+2. Compare the overall allowance probability with the allowance probability within each port category. Does the
+dataset suggest an association between port category and firewall outcome? Support your answer with
+numbers. A formal hypothesis test is not required.
+
+"""
+
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 2: ALLOWANCE PROBABILITIES")
+print("=" * 60)
+
+# Overall probability that a connection is allowed
+overall_allowed = counts["Allowed"].sum() / N
+
+print(f"\nOverall Allowance Probability: "
+      f"{overall_allowed:.6f}")
+
+results = []
+
+for port in port_order:
+
+    total_records = counts.loc[port].sum()
+    allowed_records = counts.loc[port, "Allowed"]
+
+    if total_records > 0:
+        conditional_probability = (
+            allowed_records / total_records
+        )
+    else:
+        conditional_probability = float("nan")
+
+    difference = conditional_probability - overall_allowed
+
+    results.append({
+        "Port Category": port,
+        "Total Records": total_records,
+        "Allowed Records": allowed_records,
+        "P(Allowed | Port)": conditional_probability,
+        "Difference from Overall": difference
+    })
+
+allowance_table = pd.DataFrame(results)
+
+print("\nConditional Allowance Probability Table:")
+print(allowance_table.to_string(
+    index=False,
+    formatters={
+        "P(Allowed | Port)": lambda x: f"{x:.6f}",
+        "Difference from Overall": lambda x: f"{x:.6f}"
+    }
+))
+
+print(
+    "\nWritten Interpretation for Question 2:\n"
+    f"The overall allowance probability is {overall_allowed:.6f}. "
+    "The conditional allowance probabilities show the "
+    "proportion of connections allowed within each destination "
+    "port category. Comparing these values with the overall "
+    "probability helps determine whether firewall actions vary "
+    "across port categories. Noticeable differences suggest an "
+    "association, while similar probabilities suggest a weaker "
+    "association. These calculations describe association and "
+    "do not prove causation."
+)
+
+"""
+3. Explain why “not allowed” does not automatically mean malicious traffic.
+
+"""
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 3: FIREWALL INTERPRETATION")
+print("=" * 60)
+
+print(
+    "\nWritten Answer:\n"
+    "A connection marked as 'Not Allowed' does not necessarily "
+    "mean that it is malicious. A firewall may block legitimate "
+    "traffic because of security policies, restricted ports, "
+    "network configurations, or access-control rules. For "
+    "example, a legitimate application might attempt to use "
+    "a port that the firewall does not permit. Therefore, the "
+    "firewall action tells us whether traffic was permitted, "
+    "not whether it was definitely safe or dangerous. Additional "
+    "information, such as source addresses, destinations, "
+    "traffic patterns, and security alerts, would be needed "
+    "to determine whether a connection is suspicious."
+)
+
+"""
+4. Write a 100–150-word conclusion summarizing your findings and explaining why results from this firewall may
+not represent all networks.
+
+"""
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 4: CONCLUSION AND LIMITATIONS")
+print("=" * 60)
+
+conclusion = (
+    "This analysis examined the relationship between destination "
+    "port categories and firewall actions using joint, marginal, "
+    "and conditional probabilities. The independence calculations "
+    "compared observed joint probabilities with the products of "
+    "marginal probabilities for selected combinations. The "
+    "conditional allowance probabilities for Ports 53, 80, 443, "
+    "and Other were compared with the overall allowance "
+    "probability to investigate whether firewall decisions varied "
+    "across port categories. The calculated results should be "
+    "used to describe the strength of any observed association. "
+    "However, a connection marked as 'Not Allowed' is not "
+    "necessarily malicious because firewalls can block legitimate "
+    "traffic for security or configuration reasons. One limitation "
+    "is that this dataset represents a particular network "
+    "environment and may not represent all networks. Furthermore, "
+    "probability comparisons identify associations, not causation, "
+    "and cannot independently determine whether traffic is "
+    "malicious."
+)
+
+print("\nConclusion:")
+print(conclusion)
+
+print("\nWord Count:", len(conclusion.split()))
+
+print("\n" + "=" * 60)
+print("END OF PART 5")
+print("=" * 60)
+
 
 # Part 6 Flow size and average packet size
 """
