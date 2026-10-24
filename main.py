@@ -6,10 +6,6 @@ import matplotlib.pyplot  as plt
 df = pd.read_csv("data/log2.csv")
 
 # Part 1 Prepare the  data
-"""
-Edgar
-"""
-
 #Question 1. Report the original number of records and list the distinct Action values.
 
 #Prints the number of records of network traffic according to dataset
@@ -88,7 +84,7 @@ print(df_cleaned["Y"].value_counts())
 
 
 
-print("END OF PART 1/n")
+print("END OF PART 1\n")
 
 
 
@@ -324,6 +320,8 @@ Akshay
 1. Construct a 3 × 3 frequency table of F versus A, including row and column totals. Convert it to a joint
 probability table by dividing each interior count by M. Verify that the nine joint probabilities sum to 1. 
 """
+print("\n#################### PART 6 FLOW SIZE AND AVERAGE PACKETS SIZE ####################")
+
 # Keep only the rows where packets it atleast 1
 # To calculate average bytes per packet we will divide Bytes by Packets,
 # If packets are 0, division is impossible
@@ -362,15 +360,14 @@ df["A_label"] = df["Avg"].apply(label_A)
 
 #Create a table
 table = pd.crosstab(df["F_label"], df["A_label"], margins=True, margins_name="Total")
-
-print("\n---------- 3 × 3 Frequency Table of F versus A ----------\n",table)
+print("\n6.1) ---------- Frequency Table of F versus A ----------\n",table)
 
 # Convert it to a joint probability table by dividing each interior count by M
 # Get the conor value
 m = table.loc["Total", "Total"]
 joint_prob_table = table / m
 
-print("\n\n---------- Joint Probability Table ----------\n", joint_prob_table)
+print("\n\n   ---------- Joint Probability Table ----------\n", joint_prob_table)
 print("\nThe sum of the nine joint probabilities: ", joint_prob_table.loc["Total", "Total"])
 
 
@@ -388,12 +385,12 @@ p_a_small = round(joint_prob_table.loc["Total", "A: Small"], 6)
 p_a_medium = round(joint_prob_table.loc["Total", "A: Medium"], 6)
 p_a_large = round(joint_prob_table.loc["Total", "A: Large"], 6)
 
-print(f"\n\n---------- Marginal Distribution for F ----------\n"
+print(f"\n\n6.2) ---------- Marginal Distribution for F ----------\n"
       f"P(F:Small) = {p_f_small}\n"
       f"P(F: Medium) = {p_f_medium}\n"
       f"P(F: Large) = {p_f_large}")
 
-print(f"\n\n---------- Marginal Distribution for A ----------\n"
+print(f"\n\n     ---------- Marginal Distribution for A ----------\n"
       f"P(A:Small) = {p_a_small}\n"
       f"P(A: Medium) = {p_a_medium}\n"
       f"P(A: Large) = {p_a_large}")
@@ -407,3 +404,42 @@ denominator for each. If a conditioning category is empty, report the conditiona
 points)
 
 """
+#P(F = Large, A = Small)
+p_f_large_a_small = table.loc["F: Large", "A: Small"]
+print("\n\n6.3) P(F = Large, A = Small) = ", 
+      p_f_large_a_small, "/", m, " = ", 
+      round(p_f_large_a_small/m, 6))
+
+#P(A = Large | F = Large)
+p_a_large_f_large = table.loc["F: Large", "A: Large"]
+print("\nP(A = Large | F = Large) = ",
+      p_a_large_f_large, "/", table.loc["F: Large", "Total"], " = ", 
+      round(p_a_large_f_large / table.loc["F: Large", "Total"], 6))
+
+#P(F = Large | A = Large)
+print("\nP(F = Large | A = Large) = ",
+      p_a_large_f_large, "/", table.loc["Total", "A: Large"], " = ",
+       round(p_a_large_f_large /table.loc["Total", "A: Large"], 6))
+
+"""
+4. Construct a joint table of F versus firewall outcome Y. Calculate P(Y = Allowed | F = Large) and compare it with
+the overall allowance probability in these M records.
+"""
+
+#Create a F versus firewall outcome y table
+#Building firewall y value from Part 1 setup
+
+df["Y"] = df["Action"].apply(categorize_action)
+
+f_y_table = pd.crosstab(df["F_label"], df["Y"], margins=True, margins_name="Total")
+print("\n\n6.4) ---------- A Joint Table of F versus Firewall Outcome Y ----------\n",f_y_table)
+
+#Calculate P(Y = Allowed | F = Large)
+print("\nP(Y = Allowed | F = Large) = ",
+      round(f_y_table.loc["F: Large", "Allowed"] / f_y_table.loc["F: Large", "Total"], 6))
+
+#Compare with overall allowance probability
+print("Overall Allowance Probability P(Y = Allowed): ",
+      round(f_y_table.loc["Total", "Allowed"] / f_y_table.loc["Total", "Total"], 6))
+
+print("\n############################ END OF PART 6 ############################")
