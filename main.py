@@ -85,7 +85,7 @@ def categorize_action(action):
 df_cleaned["Y"] = df_cleaned["Action"].apply(categorize_action)
 print(df_cleaned["Y"].value_counts())
 
-
+#ADD QUESTION 3 HEADER COMMENT AND DESCRIPTIONS FOR EMPTY COMMENTS
 
 print("END OF PART 1/n")
 
