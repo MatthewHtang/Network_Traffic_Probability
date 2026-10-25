@@ -1,14 +1,11 @@
 #Write your starter code below
 import pandas as pd
+import matplotlib.pyplot  as plt
 
 #Load the raw data 
 df = pd.read_csv("data/log2.csv")
 
 # Part 1 Prepare the  data
-"""
-Edgar
-"""
-
 #Question 1. Report the original number of records and list the distinct Action values.
 
 #Prints the number of records of network traffic according to dataset
@@ -87,7 +84,7 @@ print(df_cleaned["Y"].value_counts())
 
 #ADD QUESTION 3 HEADER COMMENT AND DESCRIPTIONS FOR EMPTY COMMENTS
 
-print("END OF PART 1/n")
+print("END OF PART 1\n")
 
 
 
@@ -96,26 +93,454 @@ print("END OF PART 1/n")
 Edgar
 """
 
+# Create destination-port categories
+df_cleaned["Port_Category"] = df_cleaned["Destination Port"].apply(
+    lambda port: (
+        "Port 53" if port == 53 else
+        "Port 80" if port == 80 else
+        "Port 443" if port == 443 else
+        "Other"
+    )
+)
+
+# Create firewall outcome categories
+df_cleaned["Outcome"] = df_cleaned["Action"].apply(
+    lambda action: "Allowed" if action == "allow"
+    else "Not allowed"
+)
+
+# Construct the frequency table
+frequency_table = pd.crosstab(
+    df_cleaned["Port_Category"],
+    df_cleaned["Outcome"],
+    margins=True,
+    margins_name="Total"
+)
+
+# Display rows and columns in the assignment's order
+frequency_table = frequency_table.reindex(
+    ["Port 53", "Port 80", "Port 443", "Other", "Total"],
+    axis=0
+)
+
+frequency_table = frequency_table.reindex(
+    ["Allowed", "Not allowed", "Total"],
+    axis=1
+)
+
+print("Frequency Table\n", frequency_table)
+
+
+# B. Construct the joint probability table by dividing each interior cell count by N. 𝑃̂
+# (𝑋 = 𝑥, 𝑌 = 𝑦) = 𝑛ₓᵧ/𝑁
+N = df_cleaned['Y'].value_counts().sum()
+port_list = ["Port 53", "Port 80", "Port 443", "Other"]
+
+P_XY = []
+for port in port_list:
+    for action in ["Allowed", "Not allowed"]:
+        p = frequency_table.loc[port,action]
+        P_XY.append((p/N))
+
+print(N)
+print(P_XY)
+print("Joint Probability: " ,sum(P_XY))
+
+#### 3 Find the probability that a record uses port 53 and is not allowed. (What percentage of all records use port 53 and are not allowed?
+print("P ( Port 53 and Not Allowed ): ", frequency_table.loc["Port 53", "Not allowed"] / N)
+
+#### 4 Find the probability that a record uses either port 80 or port 443, and is allowed. (What percentage of all records use either port 80 or port 443 and are allowed?)
+print("P (Port 80 or Port 443 and Allowed) : ", (frequency_table.loc['Port 80', 'Allowed'] + frequency_table.loc['Port 443', 'Allowed'])/N)
+print("Percentage of (Port 80 or Port 443 and Allowed) : ",( (frequency_table.loc['Port 80', 'Allowed'] + frequency_table.loc['Port 443', 'Allowed'])/N)*100)
+
+
+
 # Part 3 Marginal distributions
 """
 Om
+
+
+Part 3 Marginal distributions 10 points
+Calculate both marginal distributions by summing the joint probabilities. 𝑃̂
+(𝑋 = 𝑥) = ∑𝑃̂ (𝑋 = 𝑥, 𝑌 = 𝑦)
+𝑦 𝑃̂
+(𝑌 = 𝑦) = ∑𝑃̂ (𝑋 = 𝑥, 𝑌 = 𝑦)
+𝑥
+1. Present a marginal probability table for each variable and verify that each distribution sums to 1.
+2. Identify the most common destination-port category.
+3. Report the overall probability that a record is allowed.
+4. Explain what information is lost when examining only the marginal distribution
 """
+
+port_list = ["Port 53", "Port 80", "Port 443", "Other"]
+
+# Remove the Total row and Total column
+counts = frequency_table.loc[
+    port_list,
+    ["Allowed", "Not allowed"]
+]
+
+# Total number of usable records
+N = counts.to_numpy().sum()
+
+# Joint probability table
+joint_probability = counts / N
+
+print("Joint Probability Table:")
+print(joint_probability.round(4))
+
+
+
+
+# Marginal Probability For X
+X_list = []
+for port in port_list:
+    val = frequency_table.loc[port,"Allowed"] + frequency_table.loc[port ,"Not allowed" ]
+    X_list.append(val/N)
+
+print("Marginal distribution of Port \"X\" Category :\n ", port_list)
+print( X_list)
+
+# Marginal Probability For Y
+Y_list = []
+Y_total_value = 0
+for action in ["Allowed" , "Not allowed"]:
+    val = 0
+    for port in port_list:
+        val += frequency_table.loc[port, action]
+
+    Y_list.append(val/N)
+    Y_total_value = val
+
+print("Marginal distribution of Y (Outcome)\n",["Allowed","Not allowed"])
+print("\n",Y_list)
+
+# Verify that each distribution sums to 1
+print("Sum of marginal probability of X: " , sum(X_list))
+print("Sum of marginal probability of Y: " , sum(Y_list))
+
+
+
+
+
+print(" Q2. Identify the most common destination-port category.")
+print("--> The most common destination-port category is other with probability of  0.52. After that, most common category is Port 53 with probability of 0.235.")
+
+
+
+print(" Q3. Report the overall probability that a record is allowed")
+print("Overall probability a record is allowed : ", Y_total_value / N)
+
+print("4. Explain what information is lost when examining only the marginal distributions.\n\n--> Marginal distributions show the overall probabilities of destination-port categories and firewall outcomes separately. However, they do not show how firewall outcomes vary across different destination-port categories. For example, the marginal distribution tells us the overall proportion of allowed records but does not tell us whether records using Port 53, Port 80, or Port 443 are more likely to be allowed. To understand the relationship between destination port and firewall outcome, we need the joint or conditional distributions.")
+
+
+
+
+
 
 # Part 4 Conditional distributions
 """
 Om
+
+ Part 4 Conditional distributions 20 points
+Calculate the following probabilities. For each, show the numerator and denominator, report the probability,
+and interpret it in context. 𝑃̂
+(𝑌 = 𝐴𝑙𝑙𝑜𝑤𝑒𝑑 | 𝑋 = 𝑃𝑜𝑟𝑡 443), 𝑃̂ (𝑋 = 𝑃𝑜𝑟𝑡 443|𝑌 = 𝐴𝑙𝑙𝑜𝑤𝑒𝑑 ) 𝑃̂
+(𝑌 = 𝑁𝑜𝑡 𝑎𝑙𝑙𝑜𝑤𝑒𝑑 | 𝑋 = 𝑃𝑜𝑟𝑡 53),𝑃̂ ( 𝑋 = 𝑃𝑜𝑟𝑡 53 | 𝑌 = 𝑁𝑜𝑡 𝑎𝑙𝑙𝑜𝑤𝑒𝑑)
+If the conditioning category has no records, report the probability as undefined and explain why.
+1. Construct the conditional distribution of firewall outcome within each destination-port category. Verify that each nonempty row sums to 1.
+2. Create a bar chart comparing the probability of being allowed across the four port categories. Provide the
+underlying values in a table.
+3. Explain why P(Allowed | Port 443) and P(Port 443 | Allowed) answer different questions
+
+
+
+
+What is a conditional probability?
+A conditional probability asks: What is the probability of an event when we already know another event has happened?
 """
 
+
+print("Condtional Probability")
+
+print("P(Y = Allowed | X  = Port 443 ): ", frequency_table.loc["Port 443","Allowed"] / frequency_table.loc["Port 443",'Total'])
+print("P(X = Port 443 | Y = Allowed )  ", frequency_table.loc["Port 443","Allowed"] / frequency_table.loc["Total",'Allowed'])
+print("P(Y = Not allowed | X = Port 53 ) :  ", frequency_table.loc["Port 53","Not allowed"] / frequency_table.loc["Port 53","Total"])
+print("P(X = Port 53 | Y = Not allowed ) :  ", frequency_table.loc["Port 53","Not allowed"] / frequency_table.loc["Total", "Not allowed"])
+
+# 1. Construct the conditional distribution of firewall outcome within each destination-port category. Verify that each nonempty row sums to 1.
+
+
+
+# Conditional distribution of firewall outcome within each port
+conditional_table = counts.div(counts.sum(axis=1), axis=0)
+
+print("\nConditional distribution:")
+print(conditional_table.round(4))
+
+print("\nRow sums:")
+print(conditional_table.sum(axis=1).round(4))
+
+
+# 2. Create a bar chart comparing the probability of being allowed across the four port categories. Provide the
+# underlying values in a table.
+
+
+plt.bar( port_list ,conditional_table["Allowed"])
+plt.xlabel("Destination Port Categories")
+plt.ylabel("Probability of Being Allowed")
+plt.title("Probability of Being Allowed by Destination Port Category")
+plt.show()
+
+
+
+print("""3. Explain why P(Allowed | Port 443) and P(Port 443 | Allowed) answer different questions.
+
+--> P(Allowed | Port 443) provides the probability of Port 443 and firewall outcome Allowed given all the sum of all the Port 443 destination category.
+
+Meanwhile, P(Port 443 | Allowed) provides the probability of Port 443 and Allowed out of all the Allowed firewall outcome.
+
+Although, the numerator is same for both the denominator is defferent.
+
+P(Allowed | Port 443)  = n(Allowed | Port 443)/ n(Port 443)
+
+P(Port 443 | Allowed)  = n(Port 443 | Allowed )/ n(Allowed)
+""")
+
+
+
+
 # Part 5 Interpretation and independence
+
+# X = Destination Port Category
+# Y = Firewall Action (Allowed / Not Allowed)
+
+port_order = ["Port 53", "Port 80", "Port 443", "Other"]
+outcome_order = ["Allowed", "Not Allowed"]
+
+# Create the frequency table
+counts = pd.crosstab(df_cleaned["X"], df_cleaned["Y"])
+
+# Ensure all categories appear in the correct order
+counts = counts.reindex(
+    index=port_order,
+    columns=outcome_order,
+    fill_value=0
+)
+
+# Calculate total records
+N = len(df_cleaned)
+
+# Calculate joint probabilities
+joint_prob = counts / N
+
+# Calculate marginal probabilities
+p_port = counts.sum(axis=1) / N
+p_outcome = counts.sum(axis=0) / N
+
 """
-Akshay
+1. If X and Y were independent, they would satisfy the relationship below. Compare the observed joint
+probability with the product of the marginal probabilities for two cells in your table. Show the calculations.
+𝑃(𝑋 = 𝑥, 𝑌 = 𝑦) = 𝑃(𝑋 = 𝑥)𝑃(𝑌 = 𝑦)
+
 """
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 1: TEST OF INDEPENDENCE")
+print("=" * 60)
+
+print("\nJoint Frequency Table:")
+print(counts)
+
+print("\nJoint Probability Table:")
+print(joint_prob.round(6))
+
+cells_to_test = [
+    ("Port 443", "Allowed"),
+    ("Port 53", "Not Allowed")
+]
+
+for port, outcome in cells_to_test:
+
+    observed_probability = joint_prob.loc[port, outcome]
+
+    expected_probability = (
+        p_port.loc[port] * p_outcome.loc[outcome]
+    )
+
+    difference = abs(
+        observed_probability - expected_probability
+    )
+
+    print(f"\nCell: {port} and {outcome}")
+    print(f"P(X={port}, Y={outcome}) = "
+          f"{observed_probability:.6f}")
+
+    print(f"P(X={port}) * P(Y={outcome}) = "
+          f"{expected_probability:.6f}")
+
+    print(f"Absolute Difference = {difference:.6f}")
+
+    if difference < 0.000001:
+        print("Interpretation: These probabilities are "
+              "approximately equal for this cell.")
+    else:
+        print("Interpretation: These probabilities differ "
+              "for this cell, so this cell does not satisfy "
+              "the independence equation exactly.")
+
+print(
+    "\nWritten Interpretation for Question 1:\n"
+    "For Port 443 and Allowed, the joint probability is "
+    "0.178188, while the product of the marginal probabilities "
+    "is 0.102408. For Port 53 and Not Allowed, the joint "
+    "probability is 0.000443, while the product of the marginal "
+    "probabilities is 0.100112. Since these values are different, "
+    "the independence equation does not hold for these selected "
+    "cells. This suggests that destination port category and "
+    "firewall action are associated in this dataset. However, "
+    "checking two cells alone is not a complete test of "
+    "independence for the entire table."
+)
+
+"""
+
+2. Compare the overall allowance probability with the allowance probability within each port category. Does the
+dataset suggest an association between port category and firewall outcome? Support your answer with
+numbers. A formal hypothesis test is not required.
+
+"""
+
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 2: ALLOWANCE PROBABILITIES")
+print("=" * 60)
+
+# Overall probability that a connection is allowed
+overall_allowed = counts["Allowed"].sum() / N
+
+print(f"\nOverall Allowance Probability: "
+      f"{overall_allowed:.6f}")
+
+results = []
+
+for port in port_order:
+
+    total_records = counts.loc[port].sum()
+    allowed_records = counts.loc[port, "Allowed"]
+
+    if total_records > 0:
+        conditional_probability = (
+            allowed_records / total_records
+        )
+    else:
+        conditional_probability = float("nan")
+
+    difference = conditional_probability - overall_allowed
+
+    results.append({
+        "Port Category": port,
+        "Total Records": total_records,
+        "Allowed Records": allowed_records,
+        "P(Allowed | Port)": conditional_probability,
+        "Difference from Overall": difference
+    })
+
+allowance_table = pd.DataFrame(results)
+
+print("\nConditional Allowance Probability Table:")
+print(allowance_table.to_string(
+    index=False,
+    formatters={
+        "P(Allowed | Port)": lambda x: f"{x:.6f}",
+        "Difference from Overall": lambda x: f"{x:.6f}"
+    }
+))
+
+print(
+    "\nWritten Interpretation for Question 2:\n"
+    f"The overall allowance probability is {overall_allowed:.6f} "
+    f"({overall_allowed * 100:.2f}%). "
+    "The conditional allowance probabilities are approximately "
+    "99.81% for Port 53, 99.83% for Port 80, "
+    "99.94% for Port 443, and 19.04% for Other. "
+    "This shows that almost all traffic in the three specified "
+    "port categories was allowed, while only about 19.04% of "
+    "traffic in the Other category was allowed. These differences "
+    "suggest an association between destination port category "
+    "and firewall action in this dataset. However, association "
+    "does not prove causation, and traffic in the Other category "
+    "is not necessarily malicious."
+)
+
+"""
+3. Explain why “not allowed” does not automatically mean malicious traffic.
+
+"""
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 3: FIREWALL INTERPRETATION")
+print("=" * 60)
+
+print(
+    "\nWritten Answer:\n"
+    "A connection marked as 'Not Allowed' does not necessarily "
+    "mean that it is malicious. A firewall may block legitimate "
+    "traffic because of security policies, restricted ports, "
+    "network configurations, or access-control rules. For "
+    "example, a legitimate application might attempt to use "
+    "a port that the firewall does not permit. Therefore, the "
+    "firewall action tells us whether traffic was permitted, "
+    "not whether it was definitely safe or dangerous. Additional "
+    "information, such as source addresses, destinations, "
+    "traffic patterns, and security alerts, would be needed "
+    "to determine whether a connection is suspicious."
+)
+
+"""
+4. Write a 100–150-word conclusion summarizing your findings and explaining why results from this firewall may
+not represent all networks.
+
+"""
+print("\n" + "=" * 60)
+print("PART 5 - QUESTION 4: CONCLUSION AND LIMITATIONS")
+print("=" * 60)
+
+conclusion = (
+    "This analysis examined the relationship between destination "
+    "port categories and firewall actions using joint, marginal, "
+    "and conditional probabilities. The independence calculations "
+    "compared observed joint probabilities with the products of "
+    "marginal probabilities for selected combinations. The "
+    "conditional allowance probabilities for Ports 53, 80, 443, "
+    "and Other were compared with the overall allowance "
+    "probability to investigate whether firewall decisions varied "
+    "across port categories. The calculated results should be "
+    "used to describe the strength of any observed association. "
+    "However, a connection marked as 'Not Allowed' is not "
+    "necessarily malicious because firewalls can block legitimate "
+    "traffic for security or configuration reasons. One limitation "
+    "is that this dataset represents a particular network "
+    "environment and may not represent all networks. Furthermore, "
+    "probability comparisons identify associations, not causation, "
+    "and cannot independently determine whether traffic is "
+    "malicious."
+)
+
+print("\nConclusion:")
+print(conclusion)
+
+print("\nWord Count:", len(conclusion.split()))
+
+print("\n" + "=" * 60)
+print("END OF PART 5")
+print("=" * 60)
+
 
 # Part 6 Flow size and average packet size
 """
 1. Construct a 3 × 3 frequency table of F versus A, including row and column totals. Convert it to a joint
 probability table by dividing each interior count by M. Verify that the nine joint probabilities sum to 1. 
 """
+print("\n#################### PART 6 FLOW SIZE AND AVERAGE PACKETS SIZE ####################")
+
 # Keep only the rows where packets it atleast 1
 # To calculate average bytes per packet we will divide Bytes by Packets,
 # If packets are 0, division is impossible
@@ -154,15 +579,14 @@ df["A_label"] = df["Avg"].apply(label_A)
 
 #Create a table
 table = pd.crosstab(df["F_label"], df["A_label"], margins=True, margins_name="Total")
-
-print("\n---------- 3 × 3 Frequency Table of F versus A ----------\n",table)
+print("\n6.1) ---------- Frequency Table of F versus A ----------\n",table)
 
 # Convert it to a joint probability table by dividing each interior count by M
 # Get the conor value
 m = table.loc["Total", "Total"]
 joint_prob_table = table / m
 
-print("\n\n---------- Joint Probability Table ----------\n", joint_prob_table)
+print("\n\n   ---------- Joint Probability Table ----------\n", joint_prob_table)
 print("\nThe sum of the nine joint probabilities: ", joint_prob_table.loc["Total", "Total"])
 
 
@@ -180,12 +604,12 @@ p_a_small = round(joint_prob_table.loc["Total", "A: Small"], 6)
 p_a_medium = round(joint_prob_table.loc["Total", "A: Medium"], 6)
 p_a_large = round(joint_prob_table.loc["Total", "A: Large"], 6)
 
-print(f"\n\n---------- Marginal Distribution for F ----------\n"
+print(f"\n\n6.2) ---------- Marginal Distribution for F ----------\n"
       f"P(F:Small) = {p_f_small}\n"
       f"P(F: Medium) = {p_f_medium}\n"
       f"P(F: Large) = {p_f_large}")
 
-print(f"\n\n---------- Marginal Distribution for A ----------\n"
+print(f"\n\n     ---------- Marginal Distribution for A ----------\n"
       f"P(A:Small) = {p_a_small}\n"
       f"P(A: Medium) = {p_a_medium}\n"
       f"P(A: Large) = {p_a_large}")
@@ -199,3 +623,42 @@ denominator for each. If a conditioning category is empty, report the conditiona
 points)
 
 """
+#P(F = Large, A = Small)
+p_f_large_a_small = table.loc["F: Large", "A: Small"]
+print("\n\n6.3) P(F = Large, A = Small) = ", 
+      p_f_large_a_small, "/", m, " = ", 
+      round(p_f_large_a_small/m, 6))
+
+#P(A = Large | F = Large)
+p_a_large_f_large = table.loc["F: Large", "A: Large"]
+print("\nP(A = Large | F = Large) = ",
+      p_a_large_f_large, "/", table.loc["F: Large", "Total"], " = ", 
+      round(p_a_large_f_large / table.loc["F: Large", "Total"], 6))
+
+#P(F = Large | A = Large)
+print("\nP(F = Large | A = Large) = ",
+      p_a_large_f_large, "/", table.loc["Total", "A: Large"], " = ",
+       round(p_a_large_f_large /table.loc["Total", "A: Large"], 6))
+
+"""
+4. Construct a joint table of F versus firewall outcome Y. Calculate P(Y = Allowed | F = Large) and compare it with
+the overall allowance probability in these M records.
+"""
+
+#Create a F versus firewall outcome y table
+#Building firewall y value from Part 1 setup
+
+df["Y"] = df["Action"].apply(categorize_action)
+
+f_y_table = pd.crosstab(df["F_label"], df["Y"], margins=True, margins_name="Total")
+print("\n\n6.4) ---------- A Joint Table of F versus Firewall Outcome Y ----------\n",f_y_table)
+
+#Calculate P(Y = Allowed | F = Large)
+print("\nP(Y = Allowed | F = Large) = ",
+      round(f_y_table.loc["F: Large", "Allowed"] / f_y_table.loc["F: Large", "Total"], 6))
+
+#Compare with overall allowance probability
+print("Overall Allowance Probability P(Y = Allowed): ",
+      round(f_y_table.loc["Total", "Allowed"] / f_y_table.loc["Total", "Total"], 6))
+
+print("\n############################ END OF PART 6 ############################")
