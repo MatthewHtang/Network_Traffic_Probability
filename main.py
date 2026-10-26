@@ -89,9 +89,6 @@ print("END OF PART 1\n")
 
 
 # Part 2 Joint distribution
-"""
-Edgar
-"""
 
 print("START OF PART 2\n")
 
