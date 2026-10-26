@@ -187,7 +187,8 @@ print(f"Probability of Port 53 and Not allowed is: {probability_53_and_not_allow
 #Q4 Find the probability that a record uses either port 80 or port 443, and is allowed. (What percentage of all records use either port 80 or port 443 and are allowed?)
 print("\nQuestion 4:")
 print(f"P (Port 80 or Port 443 and Allowed) : {joint_probability_table.loc['Port 80', 'Allowed'] + joint_probability_table.loc['Port 443', 'Allowed']:.4f}")
-print("Percentage of (Port 80 or Port 443 and Allowed) : ",( (frequency_table.loc['Port 80', 'Allowed'] + frequency_table.loc['Port 443', 'Allowed'])/N)*100)
+probability_80_or_443_and_allowed = joint_probability_table.loc['Port 80', 'Allowed'] + joint_probability_table.loc['Port 443', 'Allowed']
+print(f"Percentage of (Port 80 or Port 443 and Allowed) : {probability_80_or_443_and_allowed*100:.2f}%")
 
 
 
