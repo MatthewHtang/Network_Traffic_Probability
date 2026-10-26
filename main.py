@@ -74,7 +74,7 @@ def categorize_action(action):
     if action == "allow":
         return "Allowed"
     else:
-        return "Not Allowed"  
+        return "Not allowed"  
 
 
 #
@@ -92,6 +92,9 @@ print("END OF PART 1\n")
 """
 Edgar
 """
+
+print("START OF PART 2\n")
+
 
 # Create destination-port categories
 df_cleaned["Port_Category"] = df_cleaned["Destination Port"].apply(
@@ -117,6 +120,9 @@ frequency_table = pd.crosstab(
     margins_name="Total"
 )
 
+
+
+
 # Display rows and columns in the assignment's order
 frequency_table = frequency_table.reindex(
     ["Port 53", "Port 80", "Port 443", "Other", "Total"],
@@ -131,27 +137,70 @@ frequency_table = frequency_table.reindex(
 print("Frequency Table\n", frequency_table)
 
 
+
+joint_probability_table = frequency_table / N
+print(joint_probability_table.round(4))
+
+
+sum_probability = joint_probability_table.loc[
+    ["Port 53", "Port 80", "Port 443", "Other"],
+    ["Allowed", "Not allowed"]
+].sum().sum()
+
+
+
 # B. Construct the joint probability table by dividing each interior cell count by N. 𝑃̂
 # (𝑋 = 𝑥, 𝑌 = 𝑦) = 𝑛ₓᵧ/𝑁
-N = df_cleaned['Y'].value_counts().sum()
-port_list = ["Port 53", "Port 80", "Port 443", "Other"]
 
-P_XY = []
-for port in port_list:
-    for action in ["Allowed", "Not allowed"]:
-        p = frequency_table.loc[port,action]
-        P_XY.append((p/N))
 
-print(N)
-print(P_XY)
-print("Joint Probability: " ,sum(P_XY))
+#Q1 Verifies that the eight joint probabilities sum to 1
+print("\nQuestion 1:")
+print(f"Total of all probabilities is: {sum_probability:.4f}")
 
-#### 3 Find the probability that a record uses port 53 and is not allowed. (What percentage of all records use port 53 and are not allowed?
-print("P ( Port 53 and Not Allowed ): ", frequency_table.loc["Port 53", "Not allowed"] / N)
 
-#### 4 Find the probability that a record uses either port 80 or port 443, and is allowed. (What percentage of all records use either port 80 or port 443 and are allowed?)
-print("P (Port 80 or Port 443 and Allowed) : ", (frequency_table.loc['Port 80', 'Allowed'] + frequency_table.loc['Port 443', 'Allowed'])/N)
+#Q2 Probability of Port 443 and Allowed: Find the probability that a randomly selected record uses port 443 and is allowed. (What percentage of all records use port 443 and are allowed?)
+print("\nQuestion 2:")
+probability_443_and_allowed = joint_probability_table.loc["Port 443", "Allowed"]
+print(f"Probability of Port 443 and Allowed is: {probability_443_and_allowed:.4f}")
+
+
+#Example of Joint Probability for the "one worked example of each probability type showing the underlying counts and denominator"
+underlying_count = frequency_table.loc["Port 443", "Allowed"]
+print("Underlying Count is: ", underlying_count)
+
+denominator = N
+print("Denominator is ", denominator)
+
+joint_probability_example = underlying_count / denominator
+
+print(f"Worked example: The probability from all records of going through Port 443 and Allowed is: = {underlying_count} / {denominator} = {joint_probability_example:.4f}")
+
+
+
+#Q3 Probability of Port 53 and is Not allowed: Find the probability that a record uses port 53 and is not allowed. (What percentage of all records use port 53 and are not allowed?)
+print("\nQuestion 3:")
+probability_53_and_not_allowed = joint_probability_table.loc["Port 53", "Not allowed"]
+print(f"Probability of Port 53 and Not allowed is: {probability_53_and_not_allowed:.4f}")
+
+
+
+#Q4 Find the probability that a record uses either port 80 or port 443, and is allowed. (What percentage of all records use either port 80 or port 443 and are allowed?)
+print("\nQuestion 4:")
+print(f"P (Port 80 or Port 443 and Allowed) : {joint_probability_table.loc['Port 80', 'Allowed'] + joint_probability_table.loc['Port 443', 'Allowed']:.4f}")
 print("Percentage of (Port 80 or Port 443 and Allowed) : ",( (frequency_table.loc['Port 80', 'Allowed'] + frequency_table.loc['Port 443', 'Allowed'])/N)*100)
+
+
+
+#Q5 Interprets Port 443 and Allowed result: 5. Interpret your result for port 443 and Allowed in a complete sentence.
+print("\nQuestion 5:")
+print("Since it is a joint probability, the result of 0.1782 means that the percentage of all records that used Port 443 and were allowed through the firewall is 17.82%")
+
+
+
+print("\nEND OF PART 2\n")
+
+
+
 
 
 
